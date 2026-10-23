@@ -3,20 +3,21 @@
 //  This is the ONLY file you need to edit to update the website.
 //  - Add / remove / edit entries in any array and the page updates itself.
 //  - Empty an array (e.g. `projects: []`) to hide that section and its nav link.
-//  - Contact details, socials, résumé and availability can also be set in `.env`
+//  - Contact details, socials, résumé and availability can also be set in `.env` / `.env.local`
 //    (see .env.example) — the values below are used as fallbacks.
 // ============================================================================
 
-// Read a public VITE_* env var, falling back to the default when unset/blank
-const env = (key, fallback) => import.meta.env[key] || fallback
+// Use a public NEXT_PUBLIC_* env value, falling back to the default when unset/blank.
+// Next.js only inlines literal `process.env.NEXT_PUBLIC_X` references, so pass the value, not the key.
+const env = (value, fallback) => value || fallback
 
-const email = env('VITE_CONTACT_EMAIL', 'dhananjaydhiman809@gmail.com')
+const email = env(process.env.NEXT_PUBLIC_CONTACT_EMAIL, 'dhananjaydhiman809@gmail.com')
 
 const portfolio = {
-  // Optional sections, switched on/off from .env (VITE_SHOW_SERVICES / VITE_SHOW_LINKS)
+  // Optional sections, switched on/off from .env (NEXT_PUBLIC_SHOW_SERVICES / NEXT_PUBLIC_SHOW_LINKS)
   features: {
-    services: env('VITE_SHOW_SERVICES', 'true') === 'true',
-    links: env('VITE_SHOW_LINKS', 'true') === 'true',
+    services: env(process.env.NEXT_PUBLIC_SHOW_SERVICES, 'true') === 'true',
+    links: env(process.env.NEXT_PUBLIC_SHOW_LINKS, 'true') === 'true',
   },
 
   meta: {
@@ -33,10 +34,10 @@ const portfolio = {
     tagline:
       'I build secure, scalable web applications — from MongoDB schemas to pixel-perfect React interfaces — currently powering nationwide government platforms used across India.',
     location: 'Dehradun, India',
-    availableForWork: env('VITE_AVAILABLE_FOR_WORK', 'true') === 'true',
-    availabilityText: env('VITE_AVAILABILITY_TEXT', 'Open to new opportunities'),
-    resume: env('VITE_RESUME_URL', '/Resume.pdf'), // file lives in /public
-    siteUrl: env('VITE_SITE_URL', ''),
+    availableForWork: env(process.env.NEXT_PUBLIC_AVAILABLE_FOR_WORK, 'true') === 'true',
+    availabilityText: env(process.env.NEXT_PUBLIC_AVAILABILITY_TEXT, 'Open to new opportunities'),
+    resume: env(process.env.NEXT_PUBLIC_RESUME_URL, '/Resume.pdf'), // file lives in /public
+    siteUrl: env(process.env.NEXT_PUBLIC_SITE_URL, ''),
     // Profile photo shown in the hero. Delete this block to hide the photo.
     // `src` is an optimized copy; `fallback` is the original file in /public.
     avatar: {
@@ -53,7 +54,7 @@ const portfolio = {
 
   contact: {
     email,
-    phone: env('VITE_CONTACT_PHONE', '+91 7055044168'),
+    phone: env(process.env.NEXT_PUBLIC_CONTACT_PHONE, '+91 7055044168'),
     // Reasons offered in the contact form's dropdown
     reasons: ['Job opportunity', 'Freelance project', 'Collaboration', 'Just saying hi'],
     responseTime: 'Usually replies within 24 hours',
@@ -64,8 +65,8 @@ const portfolio = {
 
   // `icon` must be one of: github, linkedin, mail, phone, twitter, globe
   socials: [
-    { label: 'GitHub', url: env('VITE_GITHUB_URL', 'https://github.com/Dhananjaydhiman'), icon: 'github' },
-    { label: 'LinkedIn', url: env('VITE_LINKEDIN_URL', 'https://linkedin.com/in/dhananjaydhiman'), icon: 'linkedin' },
+    { label: 'GitHub', url: env(process.env.NEXT_PUBLIC_GITHUB_URL, 'https://github.com/Dhananjaydhiman'), icon: 'github' },
+    { label: 'LinkedIn', url: env(process.env.NEXT_PUBLIC_LINKEDIN_URL, 'https://linkedin.com/in/dhananjaydhiman'), icon: 'linkedin' },
     { label: 'Email', url: `mailto:${email}`, icon: 'mail' },
   ],
 
@@ -251,7 +252,7 @@ const portfolio = {
     },
   ],
 
-  // Services you offer. Shown when VITE_SHOW_SERVICES=true.
+  // Services you offer. Shown when NEXT_PUBLIC_SHOW_SERVICES=true.
   // `icon` is one of: code, layout, smartphone, cpu, server, cloud, pen, tool (see src/components/ui/Icon.jsx)
   services: [
     {
@@ -304,7 +305,7 @@ const portfolio = {
     },
   ],
 
-  // Other links: websites you built, demos, company pages, articles… Shown when VITE_SHOW_LINKS=true.
+  // Other links: websites you built, demos, company pages, articles… Shown when NEXT_PUBLIC_SHOW_LINKS=true.
   // `category` is free text — filter tabs are created from the categories you use.
   // Replace the examples below with your own links.
   links: [

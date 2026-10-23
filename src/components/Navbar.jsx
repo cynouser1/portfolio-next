@@ -1,3 +1,5 @@
+'use client'
+
 import { useEffect, useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Icon from './ui/Icon'
@@ -56,7 +58,7 @@ export default function Navbar({ meta, nav, theme, onToggleTheme }) {
             aria-label="Toggle theme"
             className="glass grid h-10 w-10 place-items-center rounded-full transition hover:scale-105 hover:text-accent"
           >
-            <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="h-[18px] w-[18px]" />
+            {theme && <Icon name={theme === 'dark' ? 'sun' : 'moon'} className="h-[18px] w-[18px]" />}
           </button>
           <a
             href={meta.resume}

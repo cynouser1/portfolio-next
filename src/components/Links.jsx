@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { AnimatePresence, motion } from 'framer-motion'
 import Section from './ui/Section'
@@ -16,6 +18,7 @@ function Favicon({ url }) {
   const [failed, setFailed] = useState(false)
   if (failed) return <Icon name="globe" className="h-5 w-5 text-accent" />
   return (
+    // eslint-disable-next-line @next/next/no-img-element
     <img
       src={`https://www.google.com/s2/favicons?domain=${hostOf(url)}&sz=64`}
       alt=""

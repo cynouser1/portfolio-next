@@ -10,6 +10,8 @@ const eslintConfig = defineConfig([
     "out/**",
     "build/**",
     "next-env.d.ts",
+    // Original Vite sources kept for reference only
+    "reference files of react project/**",
   ]),
 ]);
 

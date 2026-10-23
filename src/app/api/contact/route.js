@@ -1,52 +1,38 @@
-// Netlify Function: POST /api/contact (see netlify.toml redirect)
-// Validates the contact form and emails it via SMTP. Credentials come from env vars (see .env.example).
+// POST /api/contact — validates the contact form and emails it via SMTP.
+// Credentials come from server-only env vars (see .env.example). Other methods get 405 from Next.js.
 import nodemailer from 'nodemailer'
-import { autoReplyEmail, ownerEmail } from '../lib/emailTemplates.js'
+import { autoReplyEmail, ownerEmail } from '@/lib/server/emailTemplates'
+import { validateContact } from '@/lib/server/validateContact'
 
-const LIMITS = { name: 100, email: 200, reason: 60, subject: 150, message: 5000 }
-const EMAIL_RE = /^[^\s@]+@[^\s@]+\.[^\s@]{2,}$/
+// nodemailer needs Node.js APIs (not the Edge runtime), and this must never be cached
+export const runtime = 'nodejs'
+export const dynamic = 'force-dynamic'
 
-const json = (statusCode, body) => ({
-  statusCode,
-  headers: { 'Content-Type': 'application/json' },
-  body: JSON.stringify(body),
-})
+const json = (status, body) => Response.json(body, { status })
 
-// Strip CR/LF from values used in mail headers to prevent header injection
-const oneLine = (v) => String(v ?? '').replace(/[\r\n]+/g, ' ').trim()
-
-export function validate(input) {
-  const data = {
-    name: oneLine(input.name),
-    email: oneLine(input.email),
-    reason: oneLine(input.reason),
-    subject: oneLine(input.subject),
-    message: String(input.message ?? '').trim(),
-  }
-  if (!data.name) return { error: 'Please enter your name.' }
-  if (!EMAIL_RE.test(data.email)) return { error: 'Please enter a valid email address.' }
-  if (!data.message || data.message.length < 10) return { error: 'Please write a message (at least 10 characters).' }
-  for (const [key, max] of Object.entries(LIMITS)) {
-    if (data[key].length > max) return { error: `${key[0].toUpperCase() + key.slice(1)} is too long (max ${max} characters).` }
-  }
-  if (!data.subject) data.subject = data.reason || 'New message'
-  return { data }
+// Public URL of the site, used for links inside the emails
+function siteUrl() {
+  if (process.env.NEXT_PUBLIC_SITE_URL) return process.env.NEXT_PUBLIC_SITE_URL
+  if (process.env.URL) return process.env.URL // Netlify
+  if (process.env.VERCEL_PROJECT_PRODUCTION_URL) return `https://${process.env.VERCEL_PROJECT_PRODUCTION_URL}` // Vercel
+  return ''
 }
 
-export const handler = async (event) => {
-  if (event.httpMethod !== 'POST') return json(405, { ok: false, error: 'Method not allowed' })
-
+export async function POST(request) {
   let input
   try {
-    input = JSON.parse(event.body || '{}')
+    input = await request.json()
   } catch {
+    return json(400, { ok: false, error: 'Invalid request body.' })
+  }
+  if (!input || typeof input !== 'object' || Array.isArray(input)) {
     return json(400, { ok: false, error: 'Invalid request body.' })
   }
 
   // Honeypot: real users never fill the hidden "website" field
   if (input.website) return json(200, { ok: true })
 
-  const { data, error } = validate(input)
+  const { data, error } = validateContact(input)
   if (error) return json(400, { ok: false, error })
 
   const { SMTP_HOST, SMTP_PORT, SMTP_SECURE, SMTP_USER, SMTP_PASS, MAIL_FROM_NAME, CONTACT_TO_EMAIL } = process.env
@@ -63,11 +49,11 @@ export const handler = async (event) => {
   })
 
   const from = { name: MAIL_FROM_NAME || 'Portfolio Contact', address: SMTP_USER }
-  const siteUrl = process.env.VITE_SITE_URL || process.env.URL || ''
+  const site = siteUrl()
   const receivedAt = new Date().toLocaleString('en-IN', { timeZone: 'Asia/Kolkata', dateStyle: 'medium', timeStyle: 'short' }) + ' IST'
 
   try {
-    const owner = ownerEmail({ ...data, receivedAt, siteUrl })
+    const owner = ownerEmail({ ...data, receivedAt, siteUrl: site })
     await transporter.sendMail({
       from,
       to: CONTACT_TO_EMAIL,
@@ -78,7 +64,7 @@ export const handler = async (event) => {
     })
 
     if (process.env.SEND_AUTO_REPLY === 'true') {
-      const reply = autoReplyEmail({ ...data, ownerName: process.env.CONTACT_OWNER_NAME || from.name, siteUrl })
+      const reply = autoReplyEmail({ ...data, ownerName: process.env.CONTACT_OWNER_NAME || from.name, siteUrl: site })
       // A failed confirmation shouldn't fail the request — the owner already has the message
       await transporter
         .sendMail({

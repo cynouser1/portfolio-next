@@ -1,29 +1,32 @@
-import { useEffect, useState } from 'react'
+import { useSyncExternalStore } from 'react'
 
-const KEY = 'portfolio-theme'
+// Must match the key used by the inline script in src/app/layout.js
+export const THEME_KEY = 'portfolio-theme'
 
-function getInitialTheme() {
-  try {
-    const saved = localStorage.getItem(KEY)
-    if (saved === 'light' || saved === 'dark') return saved
-  } catch {
-    // storage unavailable — fall through to system preference
-  }
-  return window.matchMedia('(prefers-color-scheme: light)').matches ? 'light' : 'dark'
+// The <html> class is the source of truth: the inline script in layout.js sets it before first paint.
+function subscribe(callback) {
+  const observer = new MutationObserver(callback)
+  observer.observe(document.documentElement, { attributes: true, attributeFilter: ['class'] })
+  return () => observer.disconnect()
 }
 
+const getSnapshot = () => (document.documentElement.classList.contains('dark') ? 'dark' : 'light')
+
+// Unknown on the server — consumers render theme-dependent bits only once this is non-null
+const getServerSnapshot = () => null
+
 export default function useTheme() {
-  const [theme, setTheme] = useState(getInitialTheme)
+  const theme = useSyncExternalStore(subscribe, getSnapshot, getServerSnapshot)
 
-  useEffect(() => {
-    document.documentElement.classList.toggle('dark', theme === 'dark')
+  const toggle = () => {
+    const next = getSnapshot() === 'dark' ? 'light' : 'dark'
+    document.documentElement.classList.toggle('dark', next === 'dark')
     try {
-      localStorage.setItem(KEY, theme)
+      localStorage.setItem(THEME_KEY, next)
     } catch {
-      // ignore
+      // storage unavailable — the choice just won't persist
     }
-  }, [theme])
+  }
 
-  const toggle = () => setTheme((t) => (t === 'dark' ? 'light' : 'dark'))
   return { theme, toggle }
 }

@@ -1,3 +1,5 @@
+'use client'
+
 import { useState } from 'react'
 import { AnimatePresence, motion, useMotionValue, useSpring, useTransform } from 'framer-motion'
 import Section from './ui/Section'
@@ -68,6 +70,7 @@ function FeaturedCard({ project, i }) {
         {/* Visual side: screenshot if provided, otherwise a decorative stack panel */}
         <div className={`relative min-h-56 overflow-hidden ${flip ? 'md:order-2' : ''}`}>
           {project.image ? (
+            // eslint-disable-next-line @next/next/no-img-element
             <img
               src={project.image}
               alt={`${project.title} screenshot`}
